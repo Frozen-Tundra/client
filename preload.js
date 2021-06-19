@@ -39,6 +39,10 @@ ipcRenderer.on('reload', async (event) => {
 	
 });
 
+ipcRenderer.on('httpCode', (event, code) => {
+	document.getElementById('notice').innerText += code;
+})
+
 window.addEventListener('load', (event) => {
 	const game = document.getElementById('game');
 	checkExist = setInterval(() => {

@@ -130,18 +130,21 @@ function createLoadingScreen(){
 	})
     mainWindow.webContents.on('did-navigate', (_event, _url, httpResponseCode) => {
             if (httpResponseCode >= 400) {
-                createErrorScreen();
+                createErrorScreen(httpResponseCode);
             } 
         })
   });
 };
 let errorScreen;
-function createErrorScreen() {
+function createErrorScreen(code) {
     errorScreen = new BrowserWindow({
         width: 800,
         height: 450,
         frame: false,
-        transparent: true
+        transparent: true,
+        webPreferences: {
+            preload: path.join(__dirname, './preload.js')
+        }
     });
     if (mainWindow) mainWindow.close()
     if (loadingScreen) loadingScreen.close()
@@ -149,6 +152,9 @@ function createErrorScreen() {
     errorScreen.loadURL(
         'file://' + __dirname + '/window/error.html'
     );
+    errorScreen.webContents.on('did-finish-load', () => {
+        errorScreen.webContents.send('httpCode', String(code));
+    })
     errorScreen.on('closed', () => {
         errorScreen = null
     });
