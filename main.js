@@ -115,6 +115,7 @@ function createLoadingScreen(){
     }
   );
   if(mainWindow) mainWindow.close()
+  if(errorScreen) errorScreen.close()
   loadingScreen.setResizable(false);
   loadingScreen.loadURL(
     'file://' + __dirname + '/window/loading.html'
@@ -125,10 +126,33 @@ function createLoadingScreen(){
 	mainWindow.webContents.on('did-finish-load', () => {
 		if(loadingScreen) loadingScreen.close()
 		if(!rpc) activateRPC()
-		mainWindow.show()
+        mainWindow.show();
 	})
+    mainWindow.webContents.on('did-navigate', (_event, _url, httpResponseCode) => {
+            if (httpResponseCode >= 400) {
+                createErrorScreen();
+            } 
+        })
   });
 };
+let errorScreen;
+function createErrorScreen() {
+    errorScreen = new BrowserWindow({
+        width: 800,
+        height: 450,
+        frame: false,
+        transparent: true
+    });
+    if (mainWindow) mainWindow.close()
+    if (loadingScreen) loadingScreen.close()
+    errorScreen.setResizable(false);
+    errorScreen.loadURL(
+        'file://' + __dirname + '/window/error.html'
+    );
+    errorScreen.on('closed', () => {
+        errorScreen = null
+    });
+}
 /**
  * Creates the Menu Bar
  * @returns {Menu}
@@ -249,8 +273,13 @@ function createWindow () {
  * @returns {void}
  */
 function clearCacheAndReload() {
-	const ses = mainWindow.webContents.session;
-	ses.clearCache().then(() => mainWindow.webContents.send('reload'));
+    if (mainWindow) {
+        const ses = mainWindow.webContents.session;
+        ses.clearCache().then(() => mainWindow.webContents.send('reload'));
+    } else {
+        createLoadingScreen();
+    }
+	
 }
 
 /**
