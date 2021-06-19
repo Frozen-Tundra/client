@@ -53,7 +53,8 @@ function load(){
 		localStorage.muted = false;
 		localStorage.theme = 'dark';
 	}
-	ipcRenderer.sendSync('load:data', localStorage.muted, localStorage.theme)
+	// sendSync broke the reopen on macOS for some reason
+	ipcRenderer.send('load:data', localStorage.muted, localStorage.theme)
 }
 function loadSettings() { 
 	const game = document.getElementById('game');

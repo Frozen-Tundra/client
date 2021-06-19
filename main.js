@@ -238,6 +238,9 @@ function createWindow () {
   registerKeys()
   Menu.setApplicationMenu(createMenu());
   mainWindow.loadURL('https://play.frozentundra.me/client/');
+  mainWindow.on('closed', () => {
+      mainWindow = null;
+  })
   
 }
 
