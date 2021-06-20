@@ -24,7 +24,7 @@
 /**
  * Modules and variables
  */
-const {app, dialog, BrowserWindow, Menu, MenuItem, ipcMain, nativeTheme, globalShortcut, session} = require('electron')
+const {app, dialog, BrowserWindow, Menu, MenuItem, ipcMain, nativeTheme, globalShortcut, Notification} = require('electron')
 const path = require('path')
 
 const {autoUpdater} = require("electron-updater");
@@ -296,6 +296,30 @@ function registerKeys() {
 	globalShortcut.register('CmdOrCtrl+Shift+I', () => {
 		mainWindow.webContents.openDevTools();
 	})
+    if (process.platform == 'darwin') {
+        let firstCmdQClickTime = new Date() - 3000;
+        let clickTimeout;
+        let isFirstClickThisSession = true;
+        globalShortcut.register('CmdOrCtrl+Q', () => {
+            // Exit if Cmd+Q pressed twice in 3 seconds
+            if (clickTimeout) {
+                clearTimeout(clickTimeout);
+            }
+            if ((new Date() - firstCmdQClickTime) < 3000) {
+               app.exit();
+            } else {
+                firstCmdQClickTime = new Date();
+                if (isFirstClickThisSession) {
+                    clickTimeout = setTimeout(() => {
+                        new Notification({
+                            body: 'Press Cmd+Q twice to close the client'
+                        }).show();
+                    }, 3000)
+                }
+            }
+            isFirstClickThisSession = false;
+        })
+    }
 }
 /**
  * Toggles Dark mode
