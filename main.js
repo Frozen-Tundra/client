@@ -24,7 +24,7 @@
 /**
  * Modules and variables
  */
-const {app, dialog, BrowserWindow, Menu, MenuItem, ipcMain, nativeTheme, globalShortcut, session} = require('electron')
+const {app, dialog, BrowserWindow, Menu, MenuItem, ipcMain, nativeTheme, globalShortcut, Notification} = require('electron')
 const path = require('path')
 
 const {autoUpdater} = require("electron-updater");
@@ -106,8 +106,8 @@ function createLoadingScreen(){
   
   loadingScreen = new BrowserWindow({
       /// define width and height for the mainWindow
-      width: 200,
-      height: 300,
+      width: 400,
+      height: 225,
       /// remove the mainWindow frame, so it will become a frameless mainWindow
       frame: false,
       /// and set the transparency, to remove any mainWindow background color
@@ -115,6 +115,7 @@ function createLoadingScreen(){
     }
   );
   if(mainWindow) mainWindow.close()
+  if(errorScreen) errorScreen.close()
   loadingScreen.setResizable(false);
   loadingScreen.loadURL(
     'file://' + __dirname + '/window/loading.html'
@@ -125,10 +126,39 @@ function createLoadingScreen(){
 	mainWindow.webContents.on('did-finish-load', () => {
 		if(loadingScreen) loadingScreen.close()
 		if(!rpc) activateRPC()
-		mainWindow.show()
+        mainWindow.show();
 	})
+    mainWindow.webContents.on('did-navigate', (_event, _url, httpResponseCode) => {
+            if (httpResponseCode >= 400) {
+                createErrorScreen(httpResponseCode);
+            } 
+        })
   });
 };
+let errorScreen;
+function createErrorScreen(code) {
+    errorScreen = new BrowserWindow({
+        width: 800,
+        height: 450,
+        frame: false,
+        transparent: true,
+        webPreferences: {
+            preload: path.join(__dirname, './preload.js')
+        }
+    });
+    if (mainWindow) mainWindow.close()
+    if (loadingScreen) loadingScreen.close()
+    errorScreen.setResizable(false);
+    errorScreen.loadURL(
+        'file://' + __dirname + '/window/error.html'
+    );
+    errorScreen.webContents.on('did-finish-load', () => {
+        errorScreen.webContents.send('httpCode', String(code));
+    })
+    errorScreen.on('closed', () => {
+        errorScreen = null
+    });
+}
 /**
  * Creates the Menu Bar
  * @returns {Menu}
@@ -238,6 +268,9 @@ function createWindow () {
   registerKeys()
   Menu.setApplicationMenu(createMenu());
   mainWindow.loadURL('https://play.frozentundra.me/client/');
+  mainWindow.on('closed', () => {
+      mainWindow = null;
+  })
   
 }
 
@@ -246,8 +279,13 @@ function createWindow () {
  * @returns {void}
  */
 function clearCacheAndReload() {
-	const ses = mainWindow.webContents.session;
-	ses.clearCache().then(() => mainWindow.webContents.send('reload'));
+    if (mainWindow) {
+        const ses = mainWindow.webContents.session;
+        ses.clearCache().then(() => mainWindow.webContents.send('reload'));
+    } else {
+        createLoadingScreen();
+    }
+	
 }
 
 /**
@@ -258,6 +296,30 @@ function registerKeys() {
 	globalShortcut.register('CmdOrCtrl+Shift+I', () => {
 		mainWindow.webContents.openDevTools();
 	})
+    if (process.platform == 'darwin') {
+        let firstCmdQClickTime = new Date() - 3000;
+        let clickTimeout;
+        let isFirstClickThisSession = true;
+        globalShortcut.register('CmdOrCtrl+Q', () => {
+            // Exit if Cmd+Q pressed twice in 3 seconds
+            if (clickTimeout) {
+                clearTimeout(clickTimeout);
+            }
+            if ((new Date() - firstCmdQClickTime) < 3000) {
+               app.exit();
+            } else {
+                firstCmdQClickTime = new Date();
+                if (isFirstClickThisSession) {
+                    clickTimeout = setTimeout(() => {
+                        new Notification({
+                            body: 'Press Cmd+Q twice to close the client'
+                        }).show();
+                    }, 3000)
+                }
+            }
+            isFirstClickThisSession = false;
+        })
+    }
 }
 /**
  * Toggles Dark mode
