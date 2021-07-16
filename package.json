@@ -123,7 +123,7 @@
 	"author": "Frozen Tundra <support@frozentundra.me> (https://frozentundra.me)",
 	"license": "CC0-1.0",
 	"devDependencies": {
-		"electron": "^11.1.1",
+		"electron": "^13.1.7",
 		"electron-builder": "^22.11.7"
 	},
 	"dependencies": {
