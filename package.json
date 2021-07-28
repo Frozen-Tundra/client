@@ -69,6 +69,7 @@
 					]
 				}
 			],
+			"executableName": "frozen-tundra",
 			"files": [
 				"**/*",
 				"!**/flash/{windows, mac}",
