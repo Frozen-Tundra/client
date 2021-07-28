@@ -1,6 +1,6 @@
 {
 	"name": "frozen-tundra",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "Frozen Tundra Downloadable Client",
 	"productName": "Frozen Tundra",
 	"main": "main.js",
