@@ -26,7 +26,6 @@
  */
 const {app, dialog, BrowserWindow, Menu, MenuItem, ipcMain, nativeTheme, globalShortcut, Notification} = require('electron')
 const path = require('path')
-
 const {autoUpdater} = require("electron-updater");
 
 const DiscordRPC = require('discord-rpc');
@@ -34,6 +33,7 @@ const DiscordRPC = require('discord-rpc');
 const aboutMessage = `Frozen Tundra Client v${app.getVersion()}
 Created by Allinol and Random for use with Frozen Tundra.
 Owners of Frozen Tundra: Fliberjig1 and Anvura`;
+
 
 
 /**
@@ -271,6 +271,7 @@ function createWindow () {
   mainWindow.on('closed', () => {
       mainWindow = null;
   })
+
   
 }
 
@@ -293,9 +294,17 @@ function clearCacheAndReload() {
  * @returns {void}
  */
 function registerKeys() {
-	globalShortcut.register('CmdOrCtrl+Shift+I', () => {
-		mainWindow.webContents.openDevTools();
-	})
+	if(process.argv[1] == '-debug'){
+		globalShortcut.register('CmdOrCtrl+Shift+I', () => {
+			mainWindow.webContents.openDevTools();
+		})
+		dialog.showMessageBox({
+			type: "info",
+			buttons: ["Ok"],
+			title: "",
+			message: 'Running on debug mode!'
+		});
+	}
     if (process.platform == 'darwin') {
         let firstCmdQClickTime = new Date() - 3000;
         let clickTimeout;
